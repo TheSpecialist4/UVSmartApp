@@ -8,11 +8,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-public class PreferanceRepository {
+public class PreferenceRepository {
 	
 	private Map<String, PersonPreference> preferences;
 	
-	public PreferanceRepository(String filename) {
+	public PreferenceRepository(String filename) {
 		System.out.println(filename);
 		filename.replace(" ", "%20");
 		preferences = new HashMap<>();
@@ -20,24 +20,27 @@ public class PreferanceRepository {
 			System.err.println("error reading file..exiting");
 			return;
 		}
+		printRepoContents();
 	}
 	
 	private boolean readFile(String filename) {
 		try {
 			BufferedReader buffer = new BufferedReader(new FileReader(new File(filename)));
 			String line = "";
+			PersonPreference person = new PersonPreference();
 			while ((line = buffer.readLine()) != null) {
-				System.out.println("reading line " + line);
 				if (line.trim().isEmpty()) {
+					preferences.put(person.getName(), person);
+					person = new PersonPreference();
 					continue;
 				}
 				Scanner scanner = new Scanner(line);
-				PersonPreference person = new PersonPreference();
 				while (scanner.hasNext()) {
 					String token = scanner.next();
 					switch (token) {
 					case "name:":
-						person.setName(scanner.next());
+						String n = scanner.next();
+						person.setName(n);
 						break;
 					case "Skin":
 						if (!"Type:".equals(scanner.next())) { return false; }
@@ -50,9 +53,11 @@ public class PreferanceRepository {
 						break;
 					}
 				}
-				preferences.put(person.getName(), person);
-				buffer.close();
 			}
+			if (!person.name.isEmpty()) {
+				preferences.put(person.getName(), person);
+			}
+			buffer.close();
 		} catch (IOException e) {
 			System.err.println("Error reading the file \"" + filename + "\"exiting...");
 			return false;
@@ -95,12 +100,20 @@ public class PreferanceRepository {
 		return true;
 	}
 	
+	private void printRepoContents() {
+		System.out.println("____________REPO CONTENTS________________");
+		System.out.println("count: " + preferences.size());
+		for (String name : preferences.keySet()) {
+			System.out.println(preferences.get(name));
+		}
+	}
+	
 	public static void main(String[] args) {
 		if (args.length == 0) {
-			System.out.println("Please enter the preferance filename in Eclipse");
+			System.out.println("Please enter the preference filename in Eclipse");
 			return;
 		}
-		PreferanceRepository pr = new PreferanceRepository(args[0]);
+		PreferenceRepository pr = new PreferenceRepository(args[0]);
 	}
 	
 	private class PersonPreference {
@@ -111,6 +124,7 @@ public class PreferanceRepository {
 		private SkinType skinType;
 		
 		public PersonPreference() {
+			name = new String();
 			this.tempPrefs = new HashMap<>();
 			this.uvPref = new String();
 		}
@@ -132,12 +146,23 @@ public class PreferanceRepository {
 		}
 		
 		public boolean addTempPref(int temp, String pref) {
-			return tempPrefs.put(temp, pref) != null;
+			return tempPrefs.put(temp, pref) == null;
 		}
 		
 		public boolean addUVPref(String pref) {
 			this.uvPref = pref;
 			return true;
+		}
+		
+		@Override
+		public String toString() {
+			StringBuilder output = new StringBuilder();
+			output.append(String.format("name: %s\nSkin Type: %s\n", name, getSkinType()));
+			output.append(String.format("UVO: %s\n", uvPref));
+			for (int temp : tempPrefs.keySet()) {
+				output.append(String.format("temp %d: %s\n", temp, tempPrefs.get(temp)));
+			}
+			return output.toString();
 		}
 	}
 }
