@@ -17,10 +17,27 @@ public class PreferenceRepository {
 		filename.replace(" ", "%20");
 		preferences = new HashMap<>();
 		if (!readFile(filename)) {
-			System.err.println("error reading file..exiting");
+			System.err.println("error reading file. "
+					+ "Please make sure the full path is specified. Exiting...");
 			return;
 		}
-		printRepoContents();
+		//printRepoContents();
+	}
+	
+	public String getUserPreference(String user, String prefParameter) {
+		PersonPreference person = preferences.get(user);
+		if (person == null) {
+			return null;
+		}
+		if (prefParameter.equals("UVO")) {
+			return person.getUVPref();
+		}
+		try {
+			int temp = Integer.parseInt(prefParameter);
+			return person.getTempPref(temp);
+		} catch (NumberFormatException e) {
+			return null;
+		}
 	}
 	
 	private boolean readFile(String filename) {
@@ -59,7 +76,7 @@ public class PreferenceRepository {
 			}
 			buffer.close();
 		} catch (IOException e) {
-			System.err.println("Error reading the file \"" + filename + "\"exiting...");
+			System.err.println("Error reading the file \"" + filename + "\"");
 			return false;
 		}
 		return true;
@@ -108,14 +125,6 @@ public class PreferenceRepository {
 		}
 	}
 	
-	public static void main(String[] args) {
-		if (args.length == 0) {
-			System.out.println("Please enter the preference filename in Eclipse");
-			return;
-		}
-		PreferenceRepository pr = new PreferenceRepository(args[0]);
-	}
-	
 	private class PersonPreference {
 	
 		private String name;
@@ -154,6 +163,25 @@ public class PreferenceRepository {
 			return true;
 		}
 		
+		public String getUVPref() {
+			return this.uvPref;
+		}
+		
+		public String getTempPref(int temp) {
+			if (tempPrefs.containsKey(temp)) {
+				return tempPrefs.get(temp);
+			}
+			int diff = Integer.MAX_VALUE;
+			int key = Integer.MAX_VALUE;
+			for (int t : tempPrefs.keySet()) {
+				if (t <= temp && diff > temp - t) {
+					diff = temp - t;
+					key = t;
+				}
+			}
+			return tempPrefs.get(key);
+		}
+		
 		@Override
 		public String toString() {
 			StringBuilder output = new StringBuilder();
@@ -164,5 +192,13 @@ public class PreferenceRepository {
 			}
 			return output.toString();
 		}
+	}
+	
+	public static void main(String[] args) {
+		if (args.length == 0) {
+			System.out.println("Please enter the preference filename in Eclipse");
+			return;
+		}
+		PreferenceRepository pr = new PreferenceRepository(args[0]);
 	}
 }

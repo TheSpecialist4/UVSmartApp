@@ -1,0 +1,3 @@
+Status : Location Coordinates
+Indoor : A,B
+Outdoor : C,D
