@@ -27,3 +27,4 @@ build/
 #gradle folder
 .gradle/
 /bin/
+/generated/
