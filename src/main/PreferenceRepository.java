@@ -8,12 +8,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
+import com.zeroc.Ice.Current;
+
+import UVApp.PreferenceRepositoryIce;
+import UVApp.UserDetails;
+
 public class PreferenceRepository {
 	
-	private Map<String, PersonPreference> preferences;
+	private static Map<String, PersonPreference> preferences;
 	
 	public PreferenceRepository(String filename) {
-		System.out.println(filename);
 		filename.replace(" ", "%20");
 		preferences = new HashMap<>();
 		if (!readFile(filename)) {
@@ -38,6 +42,26 @@ public class PreferenceRepository {
 		} catch (NumberFormatException e) {
 			return null;
 		}
+	}
+	
+	public static int getUserSkinType(String userName) {
+		PersonPreference person = preferences.get(userName);
+		SkinType skinType = person.getSkinType();
+		switch (skinType) {
+		case ONE:
+			return 1;
+		case TWO:
+			return 2;
+		case THREE:
+			return 3;
+		default:
+			return -1;
+		}
+	}
+	
+	public static int getUserTempThreshold(String userName) {
+		PersonPreference person = preferences.get(userName);
+		return person.getTempThreshold();
 	}
 	
 	private boolean readFile(String filename) {
@@ -125,6 +149,18 @@ public class PreferenceRepository {
 		}
 	}
 	
+	public class PreferenceRepositoryI implements PreferenceRepositoryIce {
+
+		@Override
+		public UserDetails getUserDetails(String userName, Current current) {
+			UserDetails user = new UserDetails();
+			user.tempThreshold = PreferenceRepository.getUserTempThreshold(userName);
+			user.skinType = PreferenceRepository.getUserSkinType(userName);
+			System.out.println("method called");
+			return user;
+		}
+	}
+	
 	private class PersonPreference {
 	
 		private String name;
@@ -161,6 +197,10 @@ public class PreferenceRepository {
 		public boolean addUVPref(String pref) {
 			this.uvPref = pref;
 			return true;
+		}
+		
+		public int getTempThreshold() {
+			return tempPrefs.keySet().iterator().next();
 		}
 		
 		public String getUVPref() {
@@ -200,5 +240,13 @@ public class PreferenceRepository {
 			return;
 		}
 		PreferenceRepository pr = new PreferenceRepository(args[0]);
+		try (com.zeroc.Ice.Communicator communicator = com.zeroc.Ice.Util.initialize(args)) {
+			com.zeroc.Ice.ObjectAdapter adapter = communicator.
+					createObjectAdapterWithEndpoints("PreferenceRepositoryIce", "default -p 20100");
+			adapter.add(pr.new PreferenceRepositoryI(), 
+					com.zeroc.Ice.Util.stringToIdentity("PreferenceRepositoryIce"));
+			adapter.activate();
+			communicator.waitForShutdown();
+		}
 	}
 }
