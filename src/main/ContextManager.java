@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Scanner;
 
 import com.zeroc.Ice.Current;
+import com.zeroc.Ice.ObjectAdapter;
+import com.zeroc.IceStorm.AlreadySubscribed;
 import com.zeroc.IceStorm.BadQoS;
 import com.zeroc.IceStorm.InvalidSubscriber;
 
@@ -21,7 +23,7 @@ import UVApp.TemperatureSensor;
 import UVApp.UIIcePrx;
 import UVApp.UserDetails;
 
-public class ContextManager extends com.zeroc.Ice.Application {
+public class ContextManager {
 	
 	private static Map<String, UserInfo> users = new HashMap<>();
 	private static PreferenceRepositoryIcePrx prefProxy;
@@ -87,93 +89,129 @@ public class ContextManager extends com.zeroc.Ice.Application {
 		}
 	}
 	
-	@Override
-	public int run(String[] arg0) {
-		String id = null;
-		String tempTopicName = "temperature";
-		//String locTopicName = "location";
-		//String warningTopicName = "tempWarning";
-		com.zeroc.IceStorm.TopicManagerPrx topicManager = com.zeroc.IceStorm.TopicManagerPrx.checkedCast(
-				communicator().propertyToProxy("TopicManager.Proxy"));
-		if (topicManager == null) {
-			System.err.println("Invalid proxy");
-			return 1;
-		}
-		
-		com.zeroc.IceStorm.TopicPrx tempTopic;
-		//com.zeroc.IceStorm.TopicPrx locTopic;
-		try {
-			tempTopic = topicManager.retrieve(tempTopicName);
-			//locTopic = topicManager.retrieve(locTopicName);
-		} catch (com.zeroc.IceStorm.NoSuchTopic e) {
-			try {
-				tempTopic = topicManager.create(tempTopicName);
-				//locTopic = topicManager.create(locTopicName);
-			} catch (com.zeroc.IceStorm.TopicExists ex) {
-				System.err.println(appName() + ": temporary failure");
-				return 1;
-			}
-		}
-		
-		com.zeroc.Ice.ObjectAdapter tempAdapter = communicator()
-				.createObjectAdapterWithEndpoints("TemperatureSensor.Subscriber", "tcp");
-		
-		com.zeroc.Ice.Identity tempSubId = new com.zeroc.Ice.Identity(id, "");
-		if (tempSubId.name == null) {
-			tempSubId.name = java.util.UUID.randomUUID().toString();
-		}
-		
-		com.zeroc.Ice.ObjectPrx tempSubscriber = tempAdapter.add(new TemperatureSensorI(), tempSubId);
-		Map<String, String> qos = new HashMap<>();
-		tempSubscriber = tempSubscriber.ice_oneway();
-		
-		tempAdapter.activate();
-		
-//		com.zeroc.Ice.Identity locSubId = new com.zeroc.Ice.Identity(id, "");
-//		if (locSubId.name == null) {
-//			locSubId.name = java.util.UUID.randomUUID().toString();
+	//@Override
+//	public int run(String[] arg0) {
+//		String id = null;
+//		String tempTopicName = "temperature";
+//		//String locTopicName = "location";
+//		//String warningTopicName = "tempWarning";
+//		com.zeroc.IceStorm.TopicManagerPrx topicManager = com.zeroc.IceStorm.TopicManagerPrx.checkedCast(
+//				communicator().propertyToProxy("TopicManager.Proxy"));
+//		if (topicManager == null) {
+//			System.err.println("Invalid proxy");
+//			return 1;
 //		}
-		
-		//locAdapter.activate();
-		
-		//com.zeroc.Ice.ObjectPrx locSubscriber = locAdapter.add(new LocationSensorI(), locSubId);
-		//locSubscriber = locSubscriber.ice_oneway();
-		
-		try {
-			tempTopic.subscribeAndGetPublisher(qos, tempSubscriber);
-		} catch (com.zeroc.IceStorm.AlreadySubscribed e) {
-			e.printStackTrace();
-			return 1;
-		} catch (BadQoS e) {
-			e.printStackTrace();
-			return 1;
-		} catch (InvalidSubscriber e) {
-			e.printStackTrace();
-			return 1;
-		}
-		
+//		
+//		com.zeroc.IceStorm.TopicPrx tempTopic;
+//		//com.zeroc.IceStorm.TopicPrx locTopic;
 //		try {
-//			// client
-//			com.zeroc.Ice.ObjectPrx base = communicator().stringToProxy("PreferenceRepositoryIce:default -p 20100");
-//			prefProxy = PreferenceRepositoryIcePrx.checkedCast(base);
-//			
-//			// server
-//			com.zeroc.Ice.ObjectAdapter adapter = communicator().
-//					createObjectAdapterWithEndpoints("ContextManagerIce", "default -p 20200");
-//			adapter.add(new ContextManager.ContextManagerIceI(), 
-//					com.zeroc.Ice.Util.stringToIdentity("ContextManagerIce"));
-//			adapter.activate();
-//		} catch (Exception e) {}
-		
-		communicator().waitForShutdown();
-		tempTopic.unsubscribe(tempSubscriber);
-		return 0;
-	}
+//			tempTopic = topicManager.retrieve(tempTopicName);
+//			//locTopic = topicManager.retrieve(locTopicName);
+//		} catch (com.zeroc.IceStorm.NoSuchTopic e) {
+//			try {
+//				tempTopic = topicManager.create(tempTopicName);
+//				//locTopic = topicManager.create(locTopicName);
+//			} catch (com.zeroc.IceStorm.TopicExists ex) {
+//				System.err.println(appName() + ": temporary failure");
+//				return 1;
+//			}
+//		}
+//		
+//		com.zeroc.Ice.ObjectAdapter tempAdapter = communicator()
+//				.createObjectAdapterWithEndpoints("TemperatureSensor.Subscriber", "tcp");
+//		
+//		com.zeroc.Ice.Identity tempSubId = new com.zeroc.Ice.Identity(id, "");
+//		if (tempSubId.name == null) {
+//			tempSubId.name = java.util.UUID.randomUUID().toString();
+//		}
+//		
+//		com.zeroc.Ice.ObjectPrx tempSubscriber = tempAdapter.add(new TemperatureSensorI(), tempSubId);
+//		Map<String, String> qos = new HashMap<>();
+//		tempSubscriber = tempSubscriber.ice_oneway();
+//		
+//		tempAdapter.activate();
+//		
+////		com.zeroc.Ice.Identity locSubId = new com.zeroc.Ice.Identity(id, "");
+////		if (locSubId.name == null) {
+////			locSubId.name = java.util.UUID.randomUUID().toString();
+////		}
+//		
+//		//locAdapter.activate();
+//		
+//		//com.zeroc.Ice.ObjectPrx locSubscriber = locAdapter.add(new LocationSensorI(), locSubId);
+//		//locSubscriber = locSubscriber.ice_oneway();
+//		
+//		try {
+//			tempTopic.subscribeAndGetPublisher(qos, tempSubscriber);
+//		} catch (com.zeroc.IceStorm.AlreadySubscribed e) {
+//			e.printStackTrace();
+//			return 1;
+//		} catch (BadQoS e) {
+//			e.printStackTrace();
+//			return 1;
+//		} catch (InvalidSubscriber e) {
+//			e.printStackTrace();
+//			return 1;
+//		}
+//		
+////		try {
+////			// client
+////			com.zeroc.Ice.ObjectPrx base = communicator().stringToProxy("PreferenceRepositoryIce:default -p 20100");
+////			prefProxy = PreferenceRepositoryIcePrx.checkedCast(base);
+////			
+////			// server
+////			com.zeroc.Ice.ObjectAdapter adapter = communicator().
+////					createObjectAdapterWithEndpoints("ContextManagerIce", "default -p 20200");
+////			adapter.add(new ContextManager.ContextManagerIceI(), 
+////					com.zeroc.Ice.Util.stringToIdentity("ContextManagerIce"));
+////			adapter.activate();
+////		} catch (Exception e) {}
+//		
+//		communicator().waitForShutdown();
+//		tempTopic.unsubscribe(tempSubscriber);
+//		return 0;
+//	}
 	
 	public static void main(String[] args) {
 		ContextManager cm = new ContextManager(args[0]);
 		
 		try (com.zeroc.Ice.Communicator communicator = com.zeroc.Ice.Util.initialize(args)) {
+			
+			com.zeroc.Ice.ObjectPrx obj = communicator.stringToProxy("IceStorm/TopicManager:tcp -p 9999");
+		    com.zeroc.IceStorm.TopicManagerPrx topicManager = com.zeroc.IceStorm.TopicManagerPrx.checkedCast(obj);
+		 
+		    ObjectAdapter adapter = communicator.createObjectAdapter("temperatureAdapter");
+		    
+		    TemperatureSensor ts = new TemperatureSensorI();
+		    com.zeroc.Ice.ObjectPrx proxy = adapter.addWithUUID(ts).ice_oneway();
+		    adapter.activate();
+		  
+		    com.zeroc.IceStorm.TopicPrx topic = null;
+		    try
+		    {
+		        topic = topicManager.retrieve("Weather");
+		        java.util.Map<String, String> qos = null;
+		        topic.subscribeAndGetPublisher(qos, proxy);
+		    }
+		    catch(com.zeroc.IceStorm.NoSuchTopic ex)
+		    {
+		        // Error! No topic found!
+		    } catch (AlreadySubscribed e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (BadQoS e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InvalidSubscriber e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		 
+		    communicator.waitForShutdown();
+		 
+		    topic.unsubscribe(proxy);
+			
+			
 			// client
 			com.zeroc.Ice.ObjectPrx base = communicator.stringToProxy("PreferenceRepositoryIce:default -p 20100");
 			prefProxy = PreferenceRepositoryIcePrx.checkedCast(base);
@@ -185,18 +223,18 @@ public class ContextManager extends com.zeroc.Ice.Application {
 			//uiProxy = UIIcePrx.checkedCast(base3);
 			
 			// server
-			com.zeroc.Ice.ObjectAdapter adapter = communicator.
+			com.zeroc.Ice.ObjectAdapter adapter2 = communicator.
 					createObjectAdapterWithEndpoints("ContextManagerIce", "default -p 20200");
-			adapter.add(new ContextManager.ContextManagerIceI(), 
+			adapter2.add(new ContextManager.ContextManagerIceI(), 
 					com.zeroc.Ice.Util.stringToIdentity("ContextManagerIce"));
-			adapter.activate();
+			adapter2.activate();
 			communicator.waitForShutdown();
 			
-			int status = cm.main("ContextManager", args, "config.sub");
+			//int status = cm.main("ContextManager", args, "config.sub");
 		}
 	}
 
-	public class TemperatureSensorI implements TemperatureSensor {
+	public static class TemperatureSensorI implements TemperatureSensor {
 		
 		@Override
 		public void getTemperature(String userName, String type, int temperature, Current current) {

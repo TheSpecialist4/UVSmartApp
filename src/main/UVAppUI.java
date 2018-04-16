@@ -57,7 +57,7 @@ public class UVAppUI {
 	}
 	
 	private static void exitApp() {
-		return;
+		System.exit(0);
 	}
 	
 	private static void printMainMenu() {

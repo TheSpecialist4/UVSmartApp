@@ -10,14 +10,14 @@ import java.util.Scanner;
 import UVApp.LocationSensorPrx;
 import UVApp.TemperatureSensorPrx;
 
-public class AllSensors extends com.zeroc.Ice.Application {
+public class AllSensors {
 
-	private String username;
+	private static String username;
 	//Map<Integer, Integer> tempReadings;
-	List<Integer> tempReadings;
-	List<Integer> tempTimes;
-	List<String> locReadings;
-	List<Integer> locTimes;
+	private static List<Integer> tempReadings;
+	static List<Integer> tempTimes;
+	private List<String> locReadings;
+	private List<Integer> locTimes;
 	
 	public AllSensors(String username) {
 		this.username = username;
@@ -80,44 +80,60 @@ public class AllSensors extends com.zeroc.Ice.Application {
 		}
 	}
 	
-	@Override
-	public int run(String[] arg0) {
-		boolean isShutdown = false;
-		String tempTopicName = "temperature";
-		//String locTopicName = "location";
-		com.zeroc.IceStorm.TopicManagerPrx topicManager = com.zeroc.IceStorm.TopicManagerPrx.checkedCast(
-				communicator().propertyToProxy("TopicManager.Proxy"));
-		if (topicManager == null) {
-			System.err.println("Invalid proxy");
-			return 1;
-		}
-		// retrieve topic
-		com.zeroc.IceStorm.TopicPrx tempTopic;
-		//com.zeroc.IceStorm.TopicPrx locTopic;
-		try {
-			tempTopic = topicManager.retrieve(tempTopicName);
-			//locTopic = topicManager.retrieve(locTopicName);
-		} catch (com.zeroc.IceStorm.NoSuchTopic e) {
-			try {
-				tempTopic = topicManager.create(tempTopicName);
-				//locTopic = topicManager.create(locTopicName);
-			} catch (com.zeroc.IceStorm.TopicExists ex) {
-				System.err.println(appName() + ": temporary failure");
-				return 1;
-			}
-		}
-		// temp publisher
-		com.zeroc.Ice.ObjectPrx tempPublisher = tempTopic.getPublisher();
-		tempPublisher = tempPublisher.ice_oneway();
-		TemperatureSensorPrx tempPrx = TemperatureSensorPrx.uncheckedCast(tempPublisher);
-		
-		// location
-//		com.zeroc.Ice.ObjectPrx locPublisher = locTopic.getPublisher();
-//		locPublisher = locPublisher.ice_oneway();
-//		LocationSensorPrx locPrx = LocationSensorPrx.uncheckedCast(tempPublisher);
-		
+//	@Override
+//	public int run(String[] arg0) {
+//		boolean isShutdown = false;
+//		String tempTopicName = "temperature";
+//		//String locTopicName = "location";
+//		com.zeroc.IceStorm.TopicManagerPrx topicManager = com.zeroc.IceStorm.TopicManagerPrx.checkedCast(
+//				communicator().propertyToProxy("TopicManager.Proxy"));
+//		if (topicManager == null) {
+//			System.err.println("Invalid proxy");
+//			return 1;
+//		}
+//		// retrieve topic
+//		com.zeroc.IceStorm.TopicPrx tempTopic;
+//		//com.zeroc.IceStorm.TopicPrx locTopic;
+//		try {
+//			tempTopic = topicManager.retrieve(tempTopicName);
+//			//locTopic = topicManager.retrieve(locTopicName);
+//		} catch (com.zeroc.IceStorm.NoSuchTopic e) {
+//			try {
+//				tempTopic = topicManager.create(tempTopicName);
+//				//locTopic = topicManager.create(locTopicName);
+//			} catch (com.zeroc.IceStorm.TopicExists ex) {
+//				System.err.println(appName() + ": temporary failure");
+//				return 1;
+//			}
+//		}
+//		// temp publisher
+//		com.zeroc.Ice.ObjectPrx tempPublisher = tempTopic.getPublisher();
+//		tempPublisher = tempPublisher.ice_oneway();
+//		TemperatureSensorPrx tempPrx = TemperatureSensorPrx.uncheckedCast(tempPublisher);
+//		
+//		// location
+////		com.zeroc.Ice.ObjectPrx locPublisher = locTopic.getPublisher();
+////		locPublisher = locPublisher.ice_oneway();
+////		LocationSensorPrx locPrx = LocationSensorPrx.uncheckedCast(tempPublisher);
+//		
+//		int counter = 0;
+//		while (!isShutdown) {
+//			sendTempReadings(tempPrx, counter);
+//			//sendLocReadings(locPrx, counter);
+//			counter++;
+//			try {
+//				Thread.sleep(1000);
+//			} catch (InterruptedException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//		}
+//		return 0;
+//	}
+	
+	private static void startTemp(TemperatureSensorPrx tempPrx) {
 		int counter = 0;
-		while (!isShutdown) {
+		while (true) {
 			sendTempReadings(tempPrx, counter);
 			//sendLocReadings(locPrx, counter);
 			counter++;
@@ -128,10 +144,10 @@ public class AllSensors extends com.zeroc.Ice.Application {
 				e.printStackTrace();
 			}
 		}
-		return 0;
+		
 	}
 	
-	private void sendTempReadings(TemperatureSensorPrx tempPrx, int counter) {
+	private static void sendTempReadings(TemperatureSensorPrx tempPrx, int counter) {
 		int currentIndex = 0;
 		if (counter > tempTimes.get(tempTimes.size() - 1)) {
 			while (counter >= tempTimes.get(tempTimes.size() - 1)) {
@@ -163,7 +179,27 @@ public class AllSensors extends com.zeroc.Ice.Application {
 	
 	public static void main(String[] args) {
 		AllSensors app = new AllSensors(args[0]);
-		int status = app.main("AllSensors", args, "config.pub");
-		System.exit(status);
+		try (com.zeroc.Ice.Communicator communicator = com.zeroc.Ice.Util.initialize(args)) {
+			com.zeroc.Ice.ObjectPrx obj = communicator.stringToProxy("IceStorm/TopicManager:tcp -p 9999");
+		    com.zeroc.IceStorm.TopicManagerPrx topicManager = com.zeroc.IceStorm.TopicManagerPrx.checkedCast(obj);
+		    com.zeroc.IceStorm.TopicPrx topic = null;
+		    while (topic == null) {
+		    	try {
+		    		topic = topicManager.retrieve("temperature");
+		    	} catch (com.zeroc.IceStorm.NoSuchTopic e) {
+		    		try {
+		    			topic = topicManager.create("temperature");
+		    		} catch (com.zeroc.IceStorm.TopicExists ex) {
+		    			ex.printStackTrace();
+		    			return;
+		    		}
+		    	}
+		    }
+		    com.zeroc.Ice.ObjectPrx pub = topic.getPublisher().ice_oneway();
+		    TemperatureSensorPrx tempProxy = TemperatureSensorPrx.checkedCast(pub);
+		    startTemp(tempProxy);
+		}
+		//int status = app.main("AllSensors", args, "config.pub");
+		//System.exit(status);
 	}
 }
