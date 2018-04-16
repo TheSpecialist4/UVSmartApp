@@ -64,6 +64,11 @@ public class PreferenceRepository {
 		return person.getTempThreshold();
 	}
 	
+	public static String getUserTempPref(String userName) {
+		PersonPreference person = preferences.get(userName);
+		return person.getTempPref();
+	}
+	
 	private boolean readFile(String filename) {
 		try {
 			BufferedReader buffer = new BufferedReader(new FileReader(new File(filename)));
@@ -156,7 +161,7 @@ public class PreferenceRepository {
 			UserDetails user = new UserDetails();
 			user.tempThreshold = PreferenceRepository.getUserTempThreshold(userName);
 			user.skinType = PreferenceRepository.getUserSkinType(userName);
-			System.out.println("method called");
+			user.tempPref = PreferenceRepository.getUserTempPref(userName);
 			return user;
 		}
 	}
@@ -201,6 +206,10 @@ public class PreferenceRepository {
 		
 		public int getTempThreshold() {
 			return tempPrefs.keySet().iterator().next();
+		}
+		
+		public String getTempPref() {
+			return tempPrefs.values().iterator().next();
 		}
 		
 		public String getUVPref() {

@@ -5,7 +5,7 @@ pref-2: when UVO suggest bowling
 
 name: Alice
 Skin Type: 1
-pref-1: when 35 suggest cinema
+pref-1: when 23 suggest cinema
 pref-2: when UVO suggest pool
 
 name: Arjun

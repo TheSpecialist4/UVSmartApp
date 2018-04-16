@@ -10,16 +10,20 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
+import com.zeroc.Ice.Current;
+
+import UVApp.LocationServerIce;
+
 public class LocationServer {
 	
-	private Set<String> indoors;
-	private Set<String> outdoors;
+	private static Set<String> indoors;
+	private static Set<String> outdoors;
 	
 	public LocationServer(String filename) {
 		indoors = new HashSet<>();
 		outdoors = new HashSet<>();
 		readFile(filename);
-		printLocs();
+		//printLocs();
 	}
 	
 	public String getLocationInfo(String location) {
@@ -102,5 +106,24 @@ public class LocationServer {
 			return;
 		}
 		LocationServer ls = new LocationServer(args[0]);
+		
+		try (com.zeroc.Ice.Communicator communicator = com.zeroc.Ice.Util.initialize(args)) {
+			// server
+			com.zeroc.Ice.ObjectAdapter adapter = communicator.
+					createObjectAdapterWithEndpoints("LocationServerIce", "default -p 20500");
+			adapter.add(new ContextManager.ContextManagerIceI(), 
+					com.zeroc.Ice.Util.stringToIdentity("LocationServerIce"));
+			adapter.activate();
+			communicator.waitForShutdown();
+		}
+	}
+	
+	class LocationServerIceI implements LocationServerIce {
+
+		@Override
+		public boolean isLocationIndoor(String location, Current current) {
+			return LocationServer.indoors.contains(location);
+		}
+		
 	}
 }
