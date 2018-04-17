@@ -190,9 +190,10 @@ public class ContextManager extends com.zeroc.Ice.Application {
 			adapter.add(new ContextManager.ContextManagerIceI(), 
 					com.zeroc.Ice.Util.stringToIdentity("ContextManagerIce"));
 			adapter.activate();
-			communicator.waitForShutdown();
 			
 			int status = cm.main("ContextManager", args, "config.sub");
+			
+			communicator.waitForShutdown();
 		}
 	}
 
@@ -200,7 +201,7 @@ public class ContextManager extends com.zeroc.Ice.Application {
 		
 		@Override
 		public void getTemperature(String userName, String type, int temperature, Current current) {
-			System.out.println("temperature: " + temperature);
+			//System.out.println("temperature: " + temperature);
 			if (users.get(userName) != null) {
 				if (users.get(userName).currentTemp != temperature) {
 					users.get(userName).currentTemp = temperature;
