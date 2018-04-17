@@ -8,7 +8,7 @@ Skin Type: 1
 pref-1: when 23 suggest cinema
 pref-2: when UVO suggest pool
 
-name: Arjun
+name: Kaamraan
 Skin Type: 3
 pref-1: when 30 suggest restaurants
 pref-2: when UVO suggest shops
